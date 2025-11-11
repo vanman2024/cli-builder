@@ -1,95 +1,151 @@
 ---
 description: Add structured subcommands to CLI tool
-argument-hint: <command-name>
-allowed-tools: Task, AskUserQuestion, Bash, Read, Write, Edit, Glob
+argument-hint: <command-name> [command-2] [command-3] ...
+allowed-tools: Task, AskUserQuestion, Bash, Read, Glob
 ---
 
 **Arguments**: $ARGUMENTS
 
-Goal: Add a well-structured subcommand to existing CLI tool matching framework patterns
+Goal: Orchestrate adding one or multiple subcommands to a CLI tool, launching parallel agents for 3+ subcommands.
 
-Core Principles:
-- Detect framework before generating code
-- Match existing code patterns and conventions
-- Include validation and error handling
-- Generate idiomatic framework-specific code
+**Architectural Context:**
 
-Phase 1: Discovery
-Goal: Understand CLI project structure and framework
+This command is an **orchestrator** that:
+- Detects the CLI framework
+- Gathers requirements
+- Launches 1 agent for 1-2 subcommands
+- Launches MULTIPLE agents IN PARALLEL for 3+ subcommands (all in ONE message)
 
-Actions:
-- Parse $ARGUMENTS for subcommand name
-- If no name provided, ask user for subcommand name
-- Detect language: !{bash ls package.json tsconfig.json pyproject.toml setup.py go.mod Cargo.toml 2>/dev/null}
-- Identify framework:
-  - Node.js: Check package.json for commander, yargs, oclif
-  - Python: Search for click, typer, argparse imports in main file
-  - Go: Check go.mod for cobra or cli packages
-  - Rust: Check Cargo.toml for clap
-- Load existing CLI entry point to understand structure
-
-Phase 2: Gather Requirements
-Goal: Collect subcommand specifications
+Phase 1: Load Architectural Framework
+Goal: Understand composition and parallelization patterns
 
 Actions:
-- Use AskUserQuestion to gather:
-  - Subcommand description and purpose
-  - Required positional arguments
-  - Optional flags and options
-  - Validation requirements
-- Document requirements for implementation
+- Load component decision framework:
+  !{Read ~/.claude/plugins/marketplaces/domain-plugin-builder/plugins/domain-plugin-builder/docs/frameworks/claude/reference/component-decision-framework.md}
+- Key patterns:
+  - Commands orchestrate, agents implement
+  - For 3+ items: Launch multiple agents in PARALLEL
+  - Send ALL Task() calls in SINGLE message
+  - Agents run concurrently for faster execution
 
-Phase 3: Implementation
-Goal: Generate and integrate subcommand code
+Phase 2: Parse Arguments & Determine Mode
+Goal: Count how many subcommands to create
+
+Actions:
+- Parse $ARGUMENTS to extract subcommand names:
+  !{bash echo "$ARGUMENTS" | wc -w}
+- Store count
+- Extract each subcommand name:
+  - If count = 1: Single subcommand mode
+  - If count = 2: Two subcommands mode
+  - If count >= 3: **PARALLEL MODE** - multiple agents
+
+Phase 3: Detect Existing CLI Framework
+Goal: Identify the framework to match patterns
+
+Actions:
+- Check for language indicators:
+  - !{bash ls -1 package.json setup.py pyproject.toml go.mod Cargo.toml 2>/dev/null | head -1}
+- For Node.js (package.json found):
+  - !{bash grep -E '"(commander|yargs|oclif|gluegun)"' package.json 2>/dev/null | head -1}
+- For Python files:
+  - !{bash grep -r "import click\|import typer\|import argparse\|import fire" . --include="*.py" 2>/dev/null | head -1}
+- For Go:
+  - !{bash grep -r "github.com/spf13/cobra\|github.com/urfave/cli" . --include="*.go" 2>/dev/null | head -1}
+- For Rust:
+  - !{bash grep "clap" Cargo.toml 2>/dev/null}
+- Store detected framework
+
+Phase 4: Gather Requirements (for all subcommands)
+Goal: Collect specifications
+
+Actions:
+- For EACH subcommand name from Phase 2:
+  - Ask user via AskUserQuestion:
+    - Description/purpose
+    - Required arguments
+    - Optional flags
+    - Validation needs
+  - Store requirements for that subcommand
+
+Phase 5: Launch Agent(s) for Implementation
+Goal: Delegate to cli-feature-impl agent(s)
 
 Actions:
 
-Invoke cli-feature-impl agent to generate framework-specific code.
+**Decision: 1-2 subcommands = single/sequential agents, 3+ subcommands = PARALLEL agents**
 
-Task(description="Generate subcommand implementation", subagent_type="cli-feature-impl", prompt="You are the cli-feature-impl agent. Generate a subcommand named $ARGUMENTS for the detected CLI framework.
+**For 1-2 Subcommands:**
 
-Context:
-- Framework detected: DETECTED_FRAMEWORK
-- Language: DETECTED_LANGUAGE
-- User requirements: USER_REQUIREMENTS
+Task(
+  description="Add subcommand to CLI",
+  subagent_type="cli-tool-builder:cli-feature-impl",
+  prompt="You are cli-feature-impl. Add subcommand '{name}' to the CLI.
 
-Requirements:
-- Match existing code style and patterns
-- Include argument/option definitions with validation
-- Add comprehensive error handling
-- Generate help text and descriptions
-- Follow framework best practices
-- Include inline comments for clarity
+Framework: {detected_framework}
+Language: {detected_language}
 
-Deliverable:
-- Complete subcommand code ready for integration
-- List of files to create or modify
-- Import statements needed
-- Integration instructions")
+Subcommand: {name}
+Description: {description}
+Arguments: {arguments}
+Flags: {flags}
 
-Phase 4: Integration and Validation
-Goal: Add code to project and verify
+Use Skill(cli-tool-builder:{framework}-patterns) for patterns.
+Generate code, integrate it, test syntax.
+
+Deliverable: Working subcommand integrated into CLI"
+)
+
+**For 3+ Subcommands - CRITICAL: Send ALL Task() calls in ONE MESSAGE:**
+
+Task(description="Add subcommand 1", subagent_type="cli-tool-builder:cli-feature-impl", prompt="Add subcommand '{name_1}'.
+Framework: {framework}
+Description: {desc_1}
+Arguments: {args_1}
+Use Skill(cli-tool-builder:{framework}-patterns).
+Deliverable: Subcommand 1 code")
+
+Task(description="Add subcommand 2", subagent_type="cli-tool-builder:cli-feature-impl", prompt="Add subcommand '{name_2}'.
+Framework: {framework}
+Description: {desc_2}
+Arguments: {args_2}
+Use Skill(cli-tool-builder:{framework}-patterns).
+Deliverable: Subcommand 2 code")
+
+Task(description="Add subcommand 3", subagent_type="cli-tool-builder:cli-feature-impl", prompt="Add subcommand '{name_3}'.
+Framework: {framework}
+Description: {desc_3}
+Arguments: {args_3}
+Use Skill(cli-tool-builder:{framework}-patterns).
+Deliverable: Subcommand 3 code")
+
+[Continue for all N subcommands...]
+
+**DO NOT wait between Task() calls - send them ALL at once!**
+
+Agents run in parallel. Proceed to Phase 6 only after ALL complete.
+
+Phase 6: Verification
+Goal: Confirm all subcommands were added
 
 Actions:
-- Review generated code from agent
-- Integrate into appropriate location:
-  - Separate command file if framework uses that pattern
-  - Add to main file if inline commands
-- Add necessary imports and dependencies
-- Test syntax validation:
-  - Node.js: !{bash npm run typecheck 2>&1 || echo "Syntax check skipped"}
-  - Python: !{bash python -m py_compile MAIN_FILE 2>&1}
-- Test help output: !{bash TOOL_NAME COMMAND_NAME --help 2>&1}
+- For each subcommand:
+  - Verify code was generated
+  - Check syntax if possible
+  - Test help output
+- Report any failures
 
-Phase 5: Summary
-Goal: Document changes and next steps
+Phase 7: Summary
+Goal: Report results and next steps
 
 Actions:
-- Report files modified or created
-- Show example usage:
-  - TOOL_NAME COMMAND_NAME --help
-  - TOOL_NAME COMMAND_NAME [arguments] [options]
-- List next steps:
-  - Implement business logic
-  - Add tests
-  - Update documentation
+- Display summary:
+  - Subcommands added: {count}
+  - Framework: {framework}
+  - Files modified/created
+- Show usage examples for each subcommand
+- Suggest next steps:
+  - Test each subcommand
+  - Add interactive prompts: /cli-tool-builder:add-interactive
+  - Add output formatting: /cli-tool-builder:add-output-formatting
+  - Add validation: /cli-tool-builder:add-args-parser
