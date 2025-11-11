@@ -1,124 +1,169 @@
 ---
 description: Add configuration file management (JSON, YAML, TOML, env)
-argument-hint: [config-type]
-allowed-tools: AskUserQuestion, Bash, Read, Write, Edit
+argument-hint: [config-type] [config-type-2] [config-type-3] ...
+allowed-tools: Task, AskUserQuestion, Bash, Read, Glob
 ---
 
 **Arguments**: $ARGUMENTS
 
-Goal: Add comprehensive configuration file management to CLI tool with support for multiple formats, environment variables, validation, and user-friendly defaults.
+Goal: Orchestrate adding configuration file support to CLI tool, launching parallel agents for 3+ config types.
 
-Core Principles:
-- Detect language and adapt code generation accordingly
-- Support multiple config formats and locations
-- Provide sensible defaults with clear override paths
-- Include validation and error handling
+**Architectural Context:**
 
-Phase 1: Discovery
-Goal: Understand project context and configuration needs
+This command is an **orchestrator** that:
+- Detects the CLI framework
+- Gathers requirements
+- Launches 1 agent for 1-2 config types
+- Launches MULTIPLE agents IN PARALLEL for 3+ config types (all in ONE message)
 
-Actions:
-- Parse $ARGUMENTS for config type preference (json, yaml, toml, env, rc)
-- Detect project language and structure
-- Example: !{bash ls package.json pyproject.toml Cargo.toml go.mod 2>/dev/null}
-- Check existing config files to avoid conflicts
-- Example: !{bash ls .env* config.* *.config.js 2>/dev/null}
-
-Phase 2: Requirements Gathering
-Goal: Clarify configuration needs and preferences
+Phase 1: Load Architectural Framework
+Goal: Understand composition and parallelization patterns
 
 Actions:
-- Use AskUserQuestion to determine:
-  - Config file format preference (if not in $ARGUMENTS)
-  - Config locations (user prefers ~/.config/toolname or .toolnamerc?)
-  - Which settings should be configurable?
-  - Should it support environment variable overrides?
-  - Need for config validation schemas?
-  - Interactive config wizard desired?
+- Load component decision framework:
+  !{Read ~/.claude/plugins/marketplaces/domain-plugin-builder/plugins/domain-plugin-builder/docs/frameworks/claude/reference/component-decision-framework.md}
+- Key patterns:
+  - Commands orchestrate, agents implement
+  - For 3+ items: Launch multiple agents in PARALLEL
+  - Send ALL Task() calls in SINGLE message
+  - Agents run concurrently for faster execution
 
-Phase 3: Analysis
-Goal: Determine implementation approach based on language
-
-Actions:
-- Identify project language from discovery phase
-- Map config format to appropriate library:
-  - Python: json (stdlib), yaml (pyyaml), toml (tomli/tomllib), env (python-dotenv)
-  - JavaScript/TypeScript: json (fs), yaml (js-yaml), toml (toml), env (dotenv)
-  - Go: json (encoding/json), yaml (gopkg.in/yaml.v3), toml (BurntSushi/toml), env (godotenv)
-  - Rust: json (serde_json), yaml (serde_yaml), toml (toml), env (dotenv)
-- Determine config loading strategy (cascading priorities)
-- Plan directory structure for config files
-
-Phase 4: Code Generation
-Goal: Generate configuration management code
+Phase 2: Parse Arguments & Determine Mode
+Goal: Count how many config types to implement
 
 Actions:
-- Create config module/package structure appropriate for language
-- Generate config schema/struct definition with common CLI settings:
-  - verbosity/log level
-  - output format
-  - default paths
-  - API endpoints (if applicable)
-  - timeout values
-- Implement config loader with cascading priority:
-  1. Command-line flags (highest priority)
-  2. Environment variables
-  3. Project-level config (.toolnamerc in current dir)
-  4. User-level config (~/.config/toolname/config.format)
-  5. System-level config (/etc/toolname/config.format)
-  6. Built-in defaults (lowest priority)
-- Add validation logic with helpful error messages
-- Include config file generation/initialization function
+- Parse $ARGUMENTS to extract config types:
+  !{bash echo "$ARGUMENTS" | wc -w}
+- Store count
+- Extract each config type:
+  - If count = 0: Ask user for config type preference
+  - If count = 1: Single config type mode
+  - If count = 2: Two config types mode
+  - If count >= 3: **PARALLEL MODE** - multiple agents
 
-Phase 5: Config File Templates
-Goal: Create example config files and documentation
+Phase 3: Detect Existing CLI Framework
+Goal: Identify the framework to match patterns
 
 Actions:
-- Generate example config file with all available options documented
-- Create .gitignore entries for sensitive config files
-- Add environment variable template (.env.example)
-- Document config precedence in README or docs
-- Create config initialization command helper
+- Check for language indicators:
+  - !{bash ls -1 package.json setup.py pyproject.toml go.mod Cargo.toml 2>/dev/null | head -1}
+- For Node.js (package.json found):
+  - !{bash grep -E '"(commander|yargs|oclif|gluegun)"' package.json 2>/dev/null | head -1}
+- For Python files:
+  - !{bash grep -r "import click\|import typer\|import argparse\|import fire" . --include="*.py" 2>/dev/null | head -1}
+- For Go:
+  - !{bash grep -r "github.com/spf13/cobra\|github.com/urfave/cli" . --include="*.go" 2>/dev/null | head -1}
+- For Rust:
+  - !{bash grep "clap" Cargo.toml 2>/dev/null}
+- Store detected framework
 
-Phase 6: Interactive Wizard (Optional)
-Goal: Add user-friendly config setup experience
-
-Actions:
-- If user requested wizard, generate interactive setup:
-  - Prompt for each config option with defaults
-  - Validate inputs in real-time
-  - Save to chosen location
-  - Display summary of configuration
-- Make wizard accessible via CLI flag (e.g., --init-config)
-
-Phase 7: Testing & Validation
-Goal: Verify config system works correctly
+Phase 4: Gather Requirements (for all config types)
+Goal: Collect specifications
 
 Actions:
-- Test config loading from different locations
-- Verify environment variable overrides work
-- Validate error handling for malformed config files
-- Check that defaults apply correctly
-- Example: !{bash cat test-config.json | python -m json.tool}
+- If no config types in $ARGUMENTS:
+  - Ask user via AskUserQuestion:
+    - Which config formats? (JSON, YAML, TOML, env, rc)
+    - Config locations preference? (~/.config/toolname or .toolnamerc)
+    - Which settings should be configurable?
+    - Support environment variable overrides?
+    - Need config validation schemas?
+    - Interactive config wizard desired?
+- For EACH config type from Phase 2:
+  - Store config type (json, yaml, toml, env, rc)
+  - Determine priority in cascading config system
+  - Plan validation approach
 
-Phase 8: Summary
-Goal: Document what was added
+Phase 5: Launch Agent(s) for Implementation
+Goal: Delegate to cli-feature-impl agent(s)
 
 Actions:
-- Summarize configuration system features:
-  - Supported config formats
-  - Config file locations and precedence
-  - Environment variable naming conventions
-  - Validation rules applied
-- List files created/modified:
-  - Config loader module
-  - Example config files
-  - Documentation updates
-- Provide usage examples:
-  - How to create config file
-  - How to override with env vars
-  - How to run interactive setup
+
+**Decision: 1-2 config types = single/sequential agents, 3+ config types = PARALLEL agents**
+
+**For 1-2 Config Types:**
+
+Task(
+  description="Add config support to CLI",
+  subagent_type="cli-tool-builder:cli-feature-impl",
+  prompt="You are cli-feature-impl. Add configuration file support to the CLI.
+
+Framework: {detected_framework}
+Language: {detected_language}
+
+Config Type: {config_type}
+Requirements:
+- Config format: {format (json/yaml/toml/env)}
+- Config locations: {locations}
+- Cascading priority: CLI flags > env vars > project config > user config > system config > defaults
+- Environment variable overrides: {yes/no}
+- Validation: {validation_approach}
+- Interactive wizard: {yes/no}
+
+Use Skill(cli-tool-builder:{framework}-patterns) for patterns.
+Generate config loader, validation, example files.
+
+Deliverable: Working configuration system integrated into CLI"
+)
+
+**For 3+ Config Types - CRITICAL: Send ALL Task() calls in ONE MESSAGE:**
+
+Task(description="Add config type 1", subagent_type="cli-tool-builder:cli-feature-impl", prompt="Add config support for '{type_1}'.
+Framework: {framework}
+Config format: {format_1}
+Priority level: {priority_1}
+Use Skill(cli-tool-builder:{framework}-patterns).
+Deliverable: Config loader for {type_1}")
+
+Task(description="Add config type 2", subagent_type="cli-tool-builder:cli-feature-impl", prompt="Add config support for '{type_2}'.
+Framework: {framework}
+Config format: {format_2}
+Priority level: {priority_2}
+Use Skill(cli-tool-builder:{framework}-patterns).
+Deliverable: Config loader for {type_2}")
+
+Task(description="Add config type 3", subagent_type="cli-tool-builder:cli-feature-impl", prompt="Add config support for '{type_3}'.
+Framework: {framework}
+Config format: {format_3}
+Priority level: {priority_3}
+Use Skill(cli-tool-builder:{framework}-patterns).
+Deliverable: Config loader for {type_3}")
+
+[Continue for all N config types...]
+
+**DO NOT wait between Task() calls - send them ALL at once!**
+
+Agents run in parallel. Proceed to Phase 6 only after ALL complete.
+
+Phase 6: Verification
+Goal: Confirm all config types were added
+
+Actions:
+- For each config type:
+  - Verify config loader code was generated
+  - Check syntax if possible
+  - Test config loading from different locations
+  - Verify environment variable overrides work
+- Test cascading priority (CLI flags > env > project > user > system > defaults)
+- Verify validation works for malformed configs
+- Report any failures
+
+Phase 7: Summary
+Goal: Report results and next steps
+
+Actions:
+- Display summary:
+  - Config types added: {count}
+  - Framework: {framework}
+  - Files modified/created
+  - Config locations supported
+  - Cascading priority order
+- Show usage examples:
+  - Creating config file
+  - Environment variable naming
+  - Interactive wizard (if added)
 - Suggest next steps:
   - Add config options to CLI flags
   - Implement config validation tests
   - Document config options in --help output
+  - Add config file templates to repo

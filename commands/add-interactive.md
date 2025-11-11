@@ -1,125 +1,170 @@
 ---
 description: Add interactive prompts and menus
-argument-hint: none
-allowed-tools: Bash, Read, Write, Edit
+argument-hint: [prompt-type] [prompt-type-2] [prompt-type-3] ...
+allowed-tools: Task, AskUserQuestion, Bash, Read, Glob
 ---
 
 **Arguments**: $ARGUMENTS
 
-Goal: Add interactive prompt capabilities to CLI tools with language-specific libraries and example implementations.
+Goal: Orchestrate adding interactive prompt capabilities to CLI tool, launching parallel agents for 3+ prompt types.
 
-Core Principles:
-- Detect project language before installing dependencies
-- Install appropriate library for Node.js or Python
-- Generate comprehensive examples covering all prompt types
-- Provide validation patterns and conditional logic examples
+**Architectural Context:**
 
-Phase 1: Discovery
-Goal: Detect project language and structure
+This command is an **orchestrator** that:
+- Detects the CLI framework
+- Gathers requirements
+- Launches 1 agent for 1-2 prompt types
+- Launches MULTIPLE agents IN PARALLEL for 3+ prompt types (all in ONE message)
 
-Actions:
-- Check for package.json (Node.js) or pyproject.toml/requirements.txt (Python)
-- Detect existing dependencies to avoid conflicts
-- Example: !{bash ls package.json pyproject.toml requirements.txt setup.py 2>/dev/null}
-
-Phase 2: Dependency Installation
-Goal: Install appropriate interactive prompt library
+Phase 1: Load Architectural Framework
+Goal: Understand composition and parallelization patterns
 
 Actions:
+- Load component decision framework:
+  !{Read ~/.claude/plugins/marketplaces/domain-plugin-builder/plugins/domain-plugin-builder/docs/frameworks/claude/reference/component-decision-framework.md}
+- Key patterns:
+  - Commands orchestrate, agents implement
+  - For 3+ items: Launch multiple agents in PARALLEL
+  - Send ALL Task() calls in SINGLE message
+  - Agents run concurrently for faster execution
 
-For Node.js projects (package.json exists):
-- Install inquirer (most popular, comprehensive features)
-- Example: !{bash npm install inquirer @types/inquirer --save}
-- Alternative: prompts (lightweight) or enquirer (fast, minimal)
-
-For Python projects:
-- Install questionary (modern, intuitive API)
-- Example: !{bash pip install questionary}
-- Alternative: PyInquirer (feature-rich but older)
-
-Confirm installation success with version check.
-
-Phase 3: Generate Examples
-Goal: Create comprehensive interactive prompt examples
+Phase 2: Parse Arguments & Determine Mode
+Goal: Count how many prompt types to implement
 
 Actions:
+- Parse $ARGUMENTS to extract prompt types:
+  !{bash echo "$ARGUMENTS" | wc -w}
+- Store count
+- Extract each prompt type:
+  - If count = 0: Ask user for prompt type preference
+  - If count = 1: Single prompt type mode
+  - If count = 2: Two prompt types mode
+  - If count >= 3: **PARALLEL MODE** - multiple agents
 
-Create examples/interactive-prompts directory.
-
-Generate example file with ALL prompt types:
-
-**For Node.js (inquirer):**
-- Text input with validation
-- Select menu (single choice)
-- Multi-select checkbox
-- Password input (masked)
-- Confirmation (yes/no)
-- Number input with range validation
-- Editor input (multi-line)
-- Conditional questions (show based on previous answers)
-
-**For Python (questionary):**
-- Text input with validation
-- Select menu with autocomplete
-- Checkbox (multi-select)
-- Password input (hidden)
-- Confirmation
-- Path input with file browser
-- Conditional questions
-
-Example structure:
-- examples/interactive-prompts/basic-prompts.js (or basic-prompts.py)
-- examples/interactive-prompts/wizard-example.js (or wizard-example.py)
-- examples/interactive-prompts/validation-patterns.js (or validation-patterns.py)
-
-Phase 4: Implementation Files
-Goal: Write example code files
+Phase 3: Detect Existing CLI Framework
+Goal: Identify the framework and language
 
 Actions:
+- Check for language indicators:
+  - !{bash ls -1 package.json setup.py pyproject.toml go.mod Cargo.toml 2>/dev/null | head -1}
+- For Node.js (package.json found):
+  - !{bash grep -E '"(commander|yargs|oclif|gluegun)"' package.json 2>/dev/null | head -1}
+- For Python files:
+  - !{bash grep -r "import click\|import typer\|import argparse\|import fire" . --include="*.py" 2>/dev/null | head -1}
+- For Go:
+  - !{bash grep -r "github.com/spf13/cobra\|github.com/urfave/cli" . --include="*.go" 2>/dev/null | head -1}
+- For Rust:
+  - !{bash grep "clap" Cargo.toml 2>/dev/null}
+- Store detected framework and language
 
-Write basic-prompts file with:
-- Import statements
-- Simple examples for each prompt type
-- Comments explaining usage
-- Error handling
+Phase 4: Gather Requirements (for all prompt types)
+Goal: Collect specifications
 
-Write wizard-example file with:
-- Multi-step interactive wizard
-- Conditional logic
-- Data collection and summary
-- User-friendly output
+Actions:
+- If no prompt types in $ARGUMENTS:
+  - Ask user via AskUserQuestion:
+    - Which prompt types? (text, select, checkbox, password, confirm, number, editor, path)
+    - Interactive wizard needed?
+    - Validation patterns required?
+    - Conditional logic needed?
+- For EACH prompt type from Phase 2:
+  - Store prompt type (text, select, checkbox, password, confirm, number, editor, path)
+  - Determine validation requirements
+  - Plan conditional logic (if applicable)
 
-Write validation-patterns file with:
-- Email validation
-- URL validation
-- Number range validation
-- Required field validation
-- Custom validation functions
-
-Phase 5: Documentation
-Goal: Create usage documentation
+Phase 5: Launch Agent(s) for Implementation
+Goal: Delegate to cli-feature-impl agent(s)
 
 Actions:
 
-Create INTERACTIVE-PROMPTS.md in docs/ with:
-- Library overview and installation
-- Quick start guide
-- All prompt types with examples
-- Validation patterns
-- Best practices
-- Troubleshooting tips
+**Decision: 1-2 prompt types = single/sequential agents, 3+ prompt types = PARALLEL agents**
 
-Include code snippets for common use cases:
-- Simple yes/no confirmation
-- Configuration wizard
-- Multi-step form
-- Dynamic menu generation
+**For 1-2 Prompt Types:**
 
-Phase 6: Summary
-Goal: Report what was added
+Task(
+  description="Add interactive prompts to CLI",
+  subagent_type="cli-tool-builder:cli-feature-impl",
+  prompt="You are cli-feature-impl. Add interactive prompt capabilities to the CLI.
+
+Framework: {detected_framework}
+Language: {detected_language}
+
+Prompt Type: {prompt_type}
+Requirements:
+- Library to use: {inquirer for Node.js, questionary for Python}
+- Prompt type: {text/select/checkbox/password/confirm/number/editor/path}
+- Validation: {validation_requirements}
+- Conditional logic: {yes/no}
+- Interactive wizard: {yes/no}
+
+Use Skill(cli-tool-builder:{framework}-patterns) for patterns.
+Use Skill(cli-tool-builder:inquirer-patterns) for interactive prompt patterns.
+Generate prompt code, validation, example files.
+
+Deliverable: Working interactive prompts integrated into CLI"
+)
+
+**For 3+ Prompt Types - CRITICAL: Send ALL Task() calls in ONE MESSAGE:**
+
+Task(description="Add prompt type 1", subagent_type="cli-tool-builder:cli-feature-impl", prompt="Add interactive prompt for '{type_1}'.
+Framework: {framework}
+Language: {language}
+Prompt type: {type_1}
+Validation: {validation_1}
+Use Skill(cli-tool-builder:inquirer-patterns).
+Deliverable: Interactive prompt code for {type_1}")
+
+Task(description="Add prompt type 2", subagent_type="cli-tool-builder:cli-feature-impl", prompt="Add interactive prompt for '{type_2}'.
+Framework: {framework}
+Language: {language}
+Prompt type: {type_2}
+Validation: {validation_2}
+Use Skill(cli-tool-builder:inquirer-patterns).
+Deliverable: Interactive prompt code for {type_2}")
+
+Task(description="Add prompt type 3", subagent_type="cli-tool-builder:cli-feature-impl", prompt="Add interactive prompt for '{type_3}'.
+Framework: {framework}
+Language: {language}
+Prompt type: {type_3}
+Validation: {validation_3}
+Use Skill(cli-tool-builder:inquirer-patterns).
+Deliverable: Interactive prompt code for {type_3}")
+
+[Continue for all N prompt types...]
+
+**DO NOT wait between Task() calls - send them ALL at once!**
+
+Agents run in parallel. Proceed to Phase 6 only after ALL complete.
+
+Phase 6: Verification
+Goal: Confirm all prompt types were added
 
 Actions:
-- Display installed library and version
-- List generated example files with paths
-- Show quick start command to run examples
-- Suggest next steps for integration
+- For each prompt type:
+  - Verify prompt code was generated
+  - Check syntax if possible
+  - Test prompt with valid inputs
+  - Test validation with invalid inputs
+- Verify conditional logic works (if applicable)
+- Test interactive wizard flow (if added)
+- Report any failures
+
+Phase 7: Summary
+Goal: Report results and next steps
+
+Actions:
+- Display summary:
+  - Prompt types added: {count}
+  - Framework: {framework}
+  - Library installed: {inquirer/questionary}
+  - Files modified/created
+  - Validation patterns included
+- Show usage examples:
+  - Running interactive prompts
+  - Validation patterns
+  - Conditional logic examples
+- Suggest next steps:
+  - Integrate prompts into subcommands
+  - Add keyboard shortcuts
+  - Implement multi-step wizards
+  - Add accessibility features
