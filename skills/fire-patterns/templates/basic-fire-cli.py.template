@@ -1,0 +1,59 @@
+"""{{CLI_NAME}} - {{CLI_DESCRIPTION}}
+
+Basic Fire CLI template with single-class structure.
+"""
+import fire
+from rich.console import Console
+
+console = Console()
+
+
+class {{CLASS_NAME}}:
+    """{{CLI_DESCRIPTION}}"""
+
+    def __init__(self):
+        self.version = "{{VERSION}}"
+        self.verbose = False
+
+    def init(self, name='{{DEFAULT_PROJECT_NAME}}'):
+        """Initialize a new project
+
+        Args:
+            name: Project name (default: {{DEFAULT_PROJECT_NAME}})
+        """
+        console.print(f"[green]✓[/green] Initializing project: {name}")
+        console.print(f"[dim]Version: {self.version}[/dim]")
+        return {"status": "success", "project": name}
+
+    def build(self, verbose=False):
+        """Build the project
+
+        Args:
+            verbose: Enable verbose output (default: False)
+        """
+        self.verbose = verbose
+        if self.verbose:
+            console.print("[dim]Verbose mode enabled[/dim]")
+
+        console.print("[cyan]Building project...[/cyan]")
+        # Add build logic here
+        console.print("[green]✓[/green] Build complete!")
+
+    def version_info(self):
+        """Display version information"""
+        console.print(f"[bold]{{CLI_NAME}}[/bold] version {self.version}")
+        return {"version": self.version}
+
+
+def main():
+    fire.Fire({{CLASS_NAME}})
+
+
+if __name__ == '__main__':
+    main()
+
+
+# Usage examples:
+# python {{CLI_NAME_LOWER}}.py init --name=my-project
+# python {{CLI_NAME_LOWER}}.py build --verbose
+# python {{CLI_NAME_LOWER}}.py version-info

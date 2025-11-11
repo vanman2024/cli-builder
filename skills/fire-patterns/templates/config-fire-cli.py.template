@@ -1,0 +1,228 @@
+"""{{CLI_NAME}} - {{CLI_DESCRIPTION}}
+
+Fire CLI with comprehensive configuration management.
+"""
+import fire
+from rich.console import Console
+from pathlib import Path
+import json
+from typing import Dict, Any, Optional
+
+console = Console()
+
+
+class ConfigManager:
+    """Configuration management with file persistence"""
+
+    def __init__(self, config_file: Path):
+        self.config_file = config_file
+        self._ensure_config_exists()
+
+    def _ensure_config_exists(self) -> None:
+        """Create config file if it doesn't exist"""
+        self.config_file.parent.mkdir(parents=True, exist_ok=True)
+        if not self.config_file.exists():
+            self.config_file.write_text(json.dumps({}, indent=2))
+
+    def load(self) -> Dict[str, Any]:
+        """Load configuration from file"""
+        try:
+            return json.loads(self.config_file.read_text())
+        except Exception as e:
+            console.print(f"[red]Error loading config: {e}[/red]")
+            return {}
+
+    def save(self, config: Dict[str, Any]) -> None:
+        """Save configuration to file"""
+        try:
+            self.config_file.write_text(json.dumps(config, indent=2))
+        except Exception as e:
+            console.print(f"[red]Error saving config: {e}[/red]")
+
+
+class {{CLASS_NAME}}:
+    """{{CLI_DESCRIPTION}}"""
+
+    def __init__(self):
+        self.version = "{{VERSION}}"
+        self.config_file = Path.home() / ".{{CLI_NAME_LOWER}}" / "config.json"
+        self.config_manager = ConfigManager(self.config_file)
+
+    class Config:
+        """Configuration management commands"""
+
+        def __init__(self, parent):
+            self.parent = parent
+            self.manager = parent.config_manager
+
+        def get(self, key: str, default: Optional[str] = None) -> Optional[str]:
+            """Get configuration value
+
+            Args:
+                key: Configuration key to retrieve
+                default: Default value if key not found
+            """
+            config = self.manager.load()
+            value = config.get(key, default)
+
+            if value is None:
+                console.print(f"[yellow]Key '{key}' not found[/yellow]")
+            else:
+                console.print(f"[blue]{key}[/blue]: {value}")
+
+            return value
+
+        def set(self, key: str, value: str) -> None:
+            """Set configuration value
+
+            Args:
+                key: Configuration key to set
+                value: Configuration value
+            """
+            config = self.manager.load()
+            config[key] = value
+            self.manager.save(config)
+            console.print(f"[green]✓[/green] Set {key} = {value}")
+
+        def unset(self, key: str) -> None:
+            """Remove configuration key
+
+            Args:
+                key: Configuration key to remove
+            """
+            config = self.manager.load()
+            if key in config:
+                del config[key]
+                self.manager.save(config)
+                console.print(f"[green]✓[/green] Removed {key}")
+            else:
+                console.print(f"[yellow]Key '{key}' not found[/yellow]")
+
+        def list(self) -> Dict[str, Any]:
+            """List all configuration values"""
+            config = self.manager.load()
+
+            if not config:
+                console.print("[yellow]No configuration values set[/yellow]")
+                return {}
+
+            console.print("[bold]Configuration:[/bold]")
+            for key, value in sorted(config.items()):
+                console.print(f"  [blue]{key}[/blue]: {value}")
+
+            return config
+
+        def reset(self, confirm: bool = False) -> None:
+            """Reset configuration to defaults
+
+            Args:
+                confirm: Confirm reset operation
+            """
+            if not confirm:
+                console.print("[yellow]Use --confirm to reset configuration[/yellow]")
+                return
+
+            self.manager.save({})
+            console.print("[green]✓[/green] Configuration reset")
+
+        def path(self) -> str:
+            """Show configuration file path"""
+            console.print(f"[blue]Config file:[/blue] {self.parent.config_file}")
+            return str(self.parent.config_file)
+
+        def edit(self) -> None:
+            """Open configuration file in editor"""
+            import os
+            editor = os.environ.get('EDITOR', 'vim')
+            console.print(f"[dim]Opening {self.parent.config_file} in {editor}[/dim]")
+            os.system(f"{editor} {self.parent.config_file}")
+
+        def validate(self) -> bool:
+            """Validate configuration file"""
+            try:
+                config = self.manager.load()
+                console.print("[green]✓[/green] Configuration is valid")
+                console.print(f"[dim]Found {len(config)} keys[/dim]")
+                return True
+            except Exception as e:
+                console.print(f"[red]✗ Configuration is invalid: {e}[/red]")
+                return False
+
+        def export(self, output_file: Optional[str] = None) -> str:
+            """Export configuration to file
+
+            Args:
+                output_file: Output file path (default: stdout)
+            """
+            config = self.manager.load()
+            output = json.dumps(config, indent=2)
+
+            if output_file:
+                Path(output_file).write_text(output)
+                console.print(f"[green]✓[/green] Exported to {output_file}")
+            else:
+                console.print(output)
+
+            return output
+
+        def import_config(self, input_file: str, merge: bool = False) -> None:
+            """Import configuration from file
+
+            Args:
+                input_file: Input file path
+                merge: Merge with existing config (default: False)
+            """
+            try:
+                new_config = json.loads(Path(input_file).read_text())
+
+                if merge:
+                    config = self.manager.load()
+                    config.update(new_config)
+                else:
+                    config = new_config
+
+                self.manager.save(config)
+                console.print(f"[green]✓[/green] Imported configuration from {input_file}")
+
+            except Exception as e:
+                console.print(f"[red]Error importing config: {e}[/red]")
+
+    def __init__(self):
+        self.version = "{{VERSION}}"
+        self.config_file = Path.home() / ".{{CLI_NAME_LOWER}}" / "config.json"
+        self.config_manager = ConfigManager(self.config_file)
+        self.config = self.Config(self)
+
+    def info(self) -> Dict[str, Any]:
+        """Display CLI information"""
+        console.print(f"[bold]{{CLI_NAME}}[/bold] v{self.version}")
+        console.print(f"Config file: {self.config_file}")
+
+        config = self.config_manager.load()
+        console.print(f"Config keys: {len(config)}")
+
+        return {
+            "version": self.version,
+            "config_file": str(self.config_file),
+            "config_keys": len(config)
+        }
+
+
+def main():
+    fire.Fire({{CLASS_NAME}})
+
+
+if __name__ == '__main__':
+    main()
+
+
+# Usage examples:
+# python {{CLI_NAME_LOWER}}.py config get api_key
+# python {{CLI_NAME_LOWER}}.py config set api_key abc123
+# python {{CLI_NAME_LOWER}}.py config unset api_key
+# python {{CLI_NAME_LOWER}}.py config list
+# python {{CLI_NAME_LOWER}}.py config reset --confirm
+# python {{CLI_NAME_LOWER}}.py config path
+# python {{CLI_NAME_LOWER}}.py config validate
+# python {{CLI_NAME_LOWER}}.py config export output.json
+# python {{CLI_NAME_LOWER}}.py config import-config input.json --merge

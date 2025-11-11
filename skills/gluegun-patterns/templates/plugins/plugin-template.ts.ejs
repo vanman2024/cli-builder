@@ -1,0 +1,125 @@
+import { GluegunToolbox } from 'gluegun'
+
+/**
+ * <%= pluginName %> Plugin
+ * <%= pluginDescription %>
+ */
+module.exports = (toolbox: GluegunToolbox) => {
+  const { print, filesystem, template } = toolbox
+
+  // Plugin initialization
+  print.debug('<%= pluginName %> plugin loaded')
+
+  // Add plugin namespace to toolbox
+  toolbox.<%= pluginNamespace %> = {
+    /**
+     * Plugin version
+     */
+    version: '<%= version %>',
+
+    /**
+     * Check if plugin is initialized
+     */
+    isInitialized: (): boolean => {
+      const configPath = '<%= configPath %>'
+      return filesystem.exists(configPath)
+    },
+
+    /**
+     * Initialize plugin configuration
+     */
+    initialize: async (options: any = {}): Promise<void> => {
+      print.info('Initializing <%= pluginName %>...')
+
+      // Create config from template
+      await template.generate({
+        template: '<%= configTemplate %>',
+        target: '<%= configPath %>',
+        props: {
+          ...options,
+          createdAt: new Date().toISOString()
+        }
+      })
+
+      print.success('<%= pluginName %> initialized')
+    },
+
+    /**
+     * Get plugin configuration
+     */
+    getConfig: async (): Promise<any> => {
+      const configPath = '<%= configPath %>'
+
+      if (!filesystem.exists(configPath)) {
+        print.warning('<%= pluginName %> not initialized')
+        return null
+      }
+
+      return await filesystem.read(configPath, 'json')
+    },
+
+    /**
+     * Update plugin configuration
+     */
+    updateConfig: async (updates: any): Promise<void> => {
+      const config = await toolbox.<%= pluginNamespace %>.getConfig()
+
+      if (!config) {
+        print.error('Cannot update config: <%= pluginName %> not initialized')
+        return
+      }
+
+      const updatedConfig = { ...config, ...updates }
+      await filesystem.write('<%= configPath %>', updatedConfig, { jsonIndent: 2 })
+
+      print.success('Configuration updated')
+    },
+
+    <% if (hasCommands) { %>
+    /**
+     * Execute plugin-specific operation
+     */
+    execute: async (operation: string, params: any = {}): Promise<any> => {
+      print.info(`Executing <%= pluginName %> operation: ${operation}`)
+
+      switch (operation) {
+        case '<%= operation1 %>':
+          return await handle<%= operation1Pascal %>(toolbox, params)
+
+        case '<%= operation2 %>':
+          return await handle<%= operation2Pascal %>(toolbox, params)
+
+        default:
+          print.error(`Unknown operation: ${operation}`)
+          return null
+      }
+    }
+    <% } %>
+  }
+}
+
+<% if (hasCommands) { %>
+/**
+ * Handle <%= operation1 %> operation
+ */
+async function handle<%= operation1Pascal %>(toolbox: GluegunToolbox, params: any) {
+  const { print } = toolbox
+  print.info('Handling <%= operation1 %>...')
+
+  // Implementation
+
+  return { success: true }
+}
+
+/**
+ * Handle <%= operation2 %> operation
+ */
+async function handle<%= operation2Pascal %>(toolbox: GluegunToolbox, params: any) {
+  const { print } = toolbox
+  print.info('Handling <%= operation2 %>...')
+
+  // Implementation
+
+  return { success: true }
+}
+<% } %>

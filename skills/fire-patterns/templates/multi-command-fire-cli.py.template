@@ -1,0 +1,268 @@
+"""{{CLI_NAME}} - {{CLI_DESCRIPTION}}
+
+Complex multi-command Fire CLI with multiple command groups.
+"""
+import fire
+from rich.console import Console
+from rich.table import Table
+from pathlib import Path
+from typing import Optional, List
+import json
+
+console = Console()
+
+
+class {{CLASS_NAME}}:
+    """{{CLI_DESCRIPTION}}"""
+
+    def __init__(self):
+        self.version = "{{VERSION}}"
+        self.config_file = Path.home() / ".{{CLI_NAME_LOWER}}" / "config.json"
+
+    class Project:
+        """Project management commands"""
+
+        def create(self, name: str, template: str = 'default', path: Optional[str] = None):
+            """Create a new project
+
+            Args:
+                name: Project name
+                template: Project template (default: default)
+                path: Project path (default: current directory)
+            """
+            project_path = Path(path) if path else Path.cwd() / name
+            console.print(f"[green]✓[/green] Creating project: {name}")
+            console.print(f"[dim]Template: {template}[/dim]")
+            console.print(f"[dim]Path: {project_path}[/dim]")
+
+        def delete(self, name: str, confirm: bool = False):
+            """Delete a project
+
+            Args:
+                name: Project name
+                confirm: Confirm deletion
+            """
+            if not confirm:
+                console.print("[yellow]Use --confirm to delete project[/yellow]")
+                return
+
+            console.print(f"[red]Deleting project: {name}[/red]")
+
+        def list(self):
+            """List all projects"""
+            projects = [
+                {"name": "project-a", "status": "active", "version": "1.0.0"},
+                {"name": "project-b", "status": "archived", "version": "2.1.0"},
+            ]
+
+            table = Table(title="Projects")
+            table.add_column("Name", style="cyan")
+            table.add_column("Status", style="green")
+            table.add_column("Version", style="yellow")
+
+            for proj in projects:
+                table.add_row(proj['name'], proj['status'], proj['version'])
+
+            console.print(table)
+            return projects
+
+    class Build:
+        """Build management commands"""
+
+        def start(self, target: str, parallel: bool = False, workers: int = 4):
+            """Start build process
+
+            Args:
+                target: Build target
+                parallel: Enable parallel builds
+                workers: Number of parallel workers
+            """
+            console.print(f"[cyan]Building target: {target}[/cyan]")
+            if parallel:
+                console.print(f"[dim]Parallel mode with {workers} workers[/dim]")
+
+        def clean(self, deep: bool = False):
+            """Clean build artifacts
+
+            Args:
+                deep: Perform deep clean (includes cache)
+            """
+            console.print("[yellow]Cleaning build artifacts...[/yellow]")
+            if deep:
+                console.print("[dim]Deep clean: removing cache[/dim]")
+
+        def status(self):
+            """Show build status"""
+            console.print("[bold]Build Status:[/bold]")
+            console.print("  Last build: [green]Success[/green]")
+            console.print("  Artifacts: 42 files")
+
+    class Deploy:
+        """Deployment commands"""
+
+        def start(
+            self,
+            environment: str,
+            service: Optional[str] = None,
+            force: bool = False,
+            mode: str = 'safe'
+        ):
+            """Deploy to environment
+
+            Args:
+                environment: Target environment (dev, staging, prod)
+                service: Specific service to deploy (default: all)
+                force: Force deployment
+                mode: Deployment mode (fast, safe, rollback)
+            """
+            console.print(f"[cyan]Deploying to {environment}[/cyan]")
+            if service:
+                console.print(f"[dim]Service: {service}[/dim]")
+            console.print(f"[dim]Mode: {mode}[/dim]")
+            if force:
+                console.print("[yellow]⚠ Force mode enabled[/yellow]")
+
+        def rollback(self, environment: str, version: Optional[str] = None):
+            """Rollback deployment
+
+            Args:
+                environment: Target environment
+                version: Version to rollback to (default: previous)
+            """
+            target = version or "previous"
+            console.print(f"[yellow]Rolling back {environment} to {target}[/yellow]")
+
+        def status(self, environment: str):
+            """Show deployment status
+
+            Args:
+                environment: Target environment
+            """
+            console.print(f"[bold]Deployment Status: {environment}[/bold]")
+            console.print("  Status: [green]Active[/green]")
+            console.print("  Version: 1.2.3")
+            console.print("  Last deployed: 2 hours ago")
+
+        def history(self, environment: str, limit: int = 10):
+            """Show deployment history
+
+            Args:
+                environment: Target environment
+                limit: Number of records to show
+            """
+            console.print(f"[bold]Deployment History: {environment}[/bold]")
+            for i in range(limit):
+                console.print(f"  {i+1}. Version 1.{i}.0 - 2 days ago")
+
+    class Database:
+        """Database management commands"""
+
+        def migrate(self, direction: str = 'up', steps: Optional[int] = None):
+            """Run database migrations
+
+            Args:
+                direction: Migration direction (up, down)
+                steps: Number of migrations to run (default: all)
+            """
+            console.print(f"[cyan]Running migrations {direction}[/cyan]")
+            if steps:
+                console.print(f"[dim]Steps: {steps}[/dim]")
+
+        def seed(self, dataset: str = 'default'):
+            """Seed database
+
+            Args:
+                dataset: Dataset to use (default, test, production)
+            """
+            console.print(f"[green]Seeding database with {dataset} dataset[/green]")
+
+        def reset(self, confirm: bool = False):
+            """Reset database
+
+            Args:
+                confirm: Confirm reset operation
+            """
+            if not confirm:
+                console.print("[yellow]Use --confirm to reset database[/yellow]")
+                return
+
+            console.print("[red]Resetting database...[/red]")
+
+        def backup(self, output: Optional[str] = None):
+            """Backup database
+
+            Args:
+                output: Output file path (default: auto-generated)
+            """
+            filename = output or f"backup-{self._timestamp()}.sql"
+            console.print(f"[cyan]Creating backup: {filename}[/cyan]")
+
+        @staticmethod
+        def _timestamp():
+            from datetime import datetime
+            return datetime.now().strftime("%Y%m%d-%H%M%S")
+
+    class Config:
+        """Configuration commands"""
+
+        def __init__(self, parent):
+            self.parent = parent
+
+        def get(self, key: str):
+            """Get configuration value"""
+            console.print(f"[blue]{key}[/blue]: value")
+
+        def set(self, key: str, value: str):
+            """Set configuration value"""
+            console.print(f"[green]✓[/green] Set {key} = {value}")
+
+        def list(self):
+            """List all configuration"""
+            console.print("[bold]Configuration:[/bold]")
+            console.print("  api_key: abc123")
+            console.print("  endpoint: https://api.example.com")
+
+    def __init__(self):
+        self.version = "{{VERSION}}"
+        self.config_file = Path.home() / ".{{CLI_NAME_LOWER}}" / "config.json"
+        self.project = self.Project()
+        self.build = self.Build()
+        self.deploy = self.Deploy()
+        self.database = self.Database()
+        self.config = self.Config(self)
+
+    def version_info(self):
+        """Display version information"""
+        console.print(f"[bold]{{CLI_NAME}}[/bold] version {self.version}")
+        return {"version": self.version}
+
+    def info(self):
+        """Display CLI information"""
+        console.print(f"[bold]{{CLI_NAME}}[/bold] v{self.version}")
+        console.print(f"Config: {self.config_file}")
+        console.print("\n[bold]Available Commands:[/bold]")
+        console.print("  project  - Project management")
+        console.print("  build    - Build management")
+        console.print("  deploy   - Deployment commands")
+        console.print("  database - Database operations")
+        console.print("  config   - Configuration management")
+
+
+def main():
+    fire.Fire({{CLASS_NAME}})
+
+
+if __name__ == '__main__':
+    main()
+
+
+# Usage examples:
+# python {{CLI_NAME_LOWER}}.py project create my-app --template=react
+# python {{CLI_NAME_LOWER}}.py project list
+# python {{CLI_NAME_LOWER}}.py build start production --parallel
+# python {{CLI_NAME_LOWER}}.py build clean --deep
+# python {{CLI_NAME_LOWER}}.py deploy start staging --service=api
+# python {{CLI_NAME_LOWER}}.py deploy rollback production --version=1.2.0
+# python {{CLI_NAME_LOWER}}.py database migrate --direction=up
+# python {{CLI_NAME_LOWER}}.py database backup
+# python {{CLI_NAME_LOWER}}.py config get api_key

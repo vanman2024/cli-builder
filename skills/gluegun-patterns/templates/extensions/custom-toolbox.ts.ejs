@@ -1,0 +1,71 @@
+import { GluegunToolbox } from 'gluegun'
+
+// Extend the toolbox with custom functionality
+module.exports = (toolbox: GluegunToolbox) => {
+  const { filesystem, strings, print } = toolbox
+
+  /**
+   * Custom <%= extensionName %> extension
+   */
+  toolbox.<%= extensionName %> = {
+    /**
+     * <%= methodDescription %>
+     */
+    <%= methodName %>: async (input: string): Promise<string> => {
+      // Implementation
+      print.info(`Processing: ${input}`)
+
+      <% if (usesFilesystem) { %>
+      // Filesystem operations
+      const files = filesystem.find('.', { matching: '*.ts' })
+      print.info(`Found ${files.length} TypeScript files`)
+      <% } %>
+
+      <% if (usesStrings) { %>
+      // String manipulation
+      const pascalCase = strings.pascalCase(input)
+      const camelCase = strings.camelCase(input)
+      const kebabCase = strings.kebabCase(input)
+
+      print.info(`Formats: ${pascalCase}, ${camelCase}, ${kebabCase}`)
+      <% } %>
+
+      return input
+    },
+
+    /**
+     * Validate <%= resourceType %>
+     */
+    validate: (data: any): boolean => {
+      // Validation logic
+      if (!data || typeof data !== 'object') {
+        print.error('Invalid data format')
+        return false
+      }
+
+      <% validationFields.forEach(field => { %>
+      if (!data.<%= field %>) {
+        print.error('Missing required field: <%= field %>')
+        return false
+      }
+      <% }) %>
+
+      return true
+    },
+
+    /**
+     * Format <%= resourceType %> for display
+     */
+    format: (data: any): string => {
+      // Format for display
+      const lines = [
+        `<%= resourceType %>:`,
+        <% displayFields.forEach(field => { %>
+        `  <%= field %>: ${data.<%= field %>}`,
+        <% }) %>
+      ]
+
+      return lines.join('\n')
+    }
+  }
+}

@@ -1,0 +1,95 @@
+package cmd
+
+import (
+    "fmt"
+    "os"
+
+    "github.com/spf13/cobra"
+    "github.com/spf13/viper"
+)
+
+var (
+    cfgFile string
+    verbose bool
+    output  string
+)
+
+// rootCmd represents the base command when called without any subcommands
+var rootCmd = &cobra.Command{
+    Use:   "{{.CLIName}}",
+    Short: "{{.ShortDescription}}",
+    Long: `{{.LongDescription}}
+
+This is a production-grade CLI application built with Cobra.
+It provides a complete command-line interface with proper error
+handling, configuration management, and extensibility.`,
+    Version: "{{.Version}}",
+}
+
+// Execute adds all child commands to the root command and sets flags appropriately.
+// This is called by main.main(). It only needs to happen once to the rootCmd.
+func Execute() error {
+    return rootCmd.Execute()
+}
+
+func init() {
+    cobra.OnInitialize(initConfig)
+
+    // Global flags
+    rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.{{.CLIName}}.yaml)")
+    rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "verbose output")
+    rootCmd.PersistentFlags().StringVarP(&output, "output", "o", "text", "output format (text|json|yaml)")
+
+    // Bind flags to viper
+    viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
+    viper.BindPFlag("output", rootCmd.PersistentFlags().Lookup("output"))
+
+    // Command groups for organized help
+    rootCmd.AddGroup(&cobra.Group{
+        ID:    "basic",
+        Title: "Basic Commands:",
+    })
+    rootCmd.AddGroup(&cobra.Group{
+        ID:    "management",
+        Title: "Management Commands:",
+    })
+    rootCmd.AddGroup(&cobra.Group{
+        ID:    "other",
+        Title: "Other Commands:",
+    })
+}
+
+// initConfig reads in config file and ENV variables if set.
+func initConfig() {
+    if cfgFile != "" {
+        // Use config file from the flag.
+        viper.SetConfigFile(cfgFile)
+    } else {
+        // Find home directory.
+        home, err := os.UserHomeDir()
+        cobra.CheckErr(err)
+
+        // Search config in home directory with name ".{{.CLIName}}" (without extension).
+        viper.AddConfigPath(home)
+        viper.AddConfigPath(".")
+        viper.SetConfigType("yaml")
+        viper.SetConfigName(".{{.CLIName}}")
+    }
+
+    viper.AutomaticEnv() // read in environment variables that match
+
+    // If a config file is found, read it in.
+    if err := viper.ReadInConfig(); err == nil && verbose {
+        fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+    }
+}
+
+// GetVerbose returns whether verbose mode is enabled
+func GetVerbose() bool {
+    return viper.GetBool("verbose")
+}
+
+// GetOutput returns the output format
+func GetOutput() string {
+    return viper.GetString("output")
+}

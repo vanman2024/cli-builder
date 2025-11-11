@@ -1,0 +1,82 @@
+import { GluegunCommand } from 'gluegun'
+
+const command: GluegunCommand = {
+  name: '<%= name %>',
+  description: 'Interact with <%= apiName %> API',
+
+  run: async (toolbox) => {
+    const { http, print, parameters, prompt } = toolbox
+
+    // Get API configuration
+    const apiKey = process.env.<%= apiKeyEnv %> || parameters.options.key
+
+    if (!apiKey) {
+      print.error('API key is required')
+      print.info('Set <%= apiKeyEnv %> environment variable or use --key option')
+      return
+    }
+
+    // Create API client
+    const api = http.create({
+      baseURL: '<%= apiBaseUrl %>',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json'
+      },
+      timeout: 10000
+    })
+
+    // Show spinner while loading
+    const spinner = print.spin('Fetching data from <%= apiName %>...')
+
+    try {
+      // Make API request
+      const response = await api.get('<%= endpoint %>')
+
+      // Check response
+      if (!response.ok) {
+        spinner.fail(`API Error: ${response.problem}`)
+        if (response.data) {
+          print.error(JSON.stringify(response.data, null, 2))
+        }
+        return
+      }
+
+      spinner.succeed('Data fetched successfully')
+
+      // Display results
+      const data = response.data
+
+      <% if (displayFormat === 'table') { %>
+      // Display as table
+      const tableData = data.map(item => [
+        item.<%= field1 %>,
+        item.<%= field2 %>,
+        item.<%= field3 %>
+      ])
+
+      print.table([
+        ['<%= header1 %>', '<%= header2 %>', '<%= header3 %>'],
+        ...tableData
+      ])
+      <% } else { %>
+      // Display as JSON
+      print.info(JSON.stringify(data, null, 2))
+      <% } %>
+
+      // Optional: Save to file
+      const shouldSave = await prompt.confirm('Save results to file?')
+      if (shouldSave) {
+        const filename = `<%= outputFile %>`
+        await toolbox.filesystem.write(filename, JSON.stringify(data, null, 2))
+        print.success(`Saved to ${filename}`)
+      }
+
+    } catch (error) {
+      spinner.fail('Request failed')
+      print.error(error.message)
+    }
+  }
+}
+
+module.exports = command

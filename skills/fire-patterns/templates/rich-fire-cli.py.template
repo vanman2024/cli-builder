@@ -1,0 +1,161 @@
+"""{{CLI_NAME}} - {{CLI_DESCRIPTION}}
+
+Fire CLI with rich console formatting and output.
+"""
+import fire
+from rich.console import Console
+from rich.table import Table
+from rich.panel import Panel
+from rich.progress import track
+from rich.tree import Tree
+import time
+
+console = Console()
+
+
+class {{CLASS_NAME}}:
+    """{{CLI_DESCRIPTION}}"""
+
+    def __init__(self):
+        self.version = "{{VERSION}}"
+
+    def status(self):
+        """Display application status with rich formatting"""
+        panel = Panel(
+            "[bold green]Application Running[/bold green]\n"
+            f"Version: {self.version}\n"
+            "Status: [green]Active[/green]",
+            title="{{CLI_NAME}} Status",
+            border_style="green"
+        )
+        console.print(panel)
+
+        return {
+            "status": "active",
+            "version": self.version
+        }
+
+    def list_items(self, format='table'):
+        """List items with formatted output
+
+        Args:
+            format: Output format - table, tree, or json (default: table)
+        """
+        items = [
+            {"id": 1, "name": "Item Alpha", "status": "active", "count": 42},
+            {"id": 2, "name": "Item Beta", "status": "pending", "count": 23},
+            {"id": 3, "name": "Item Gamma", "status": "completed", "count": 67},
+        ]
+
+        if format == 'table':
+            table = Table(title="{{CLI_NAME}} Items", show_header=True, header_style="bold magenta")
+            table.add_column("ID", style="cyan", width=6)
+            table.add_column("Name", style="green")
+            table.add_column("Status", style="yellow")
+            table.add_column("Count", justify="right", style="blue")
+
+            for item in items:
+                status_color = {
+                    "active": "green",
+                    "pending": "yellow",
+                    "completed": "blue"
+                }.get(item['status'], "white")
+
+                table.add_row(
+                    str(item['id']),
+                    item['name'],
+                    f"[{status_color}]{item['status']}[/{status_color}]",
+                    str(item['count'])
+                )
+
+            console.print(table)
+
+        elif format == 'tree':
+            tree = Tree("{{CLI_NAME}} Items")
+            for item in items:
+                branch = tree.add(f"[bold]{item['name']}[/bold]")
+                branch.add(f"ID: {item['id']}")
+                branch.add(f"Status: {item['status']}")
+                branch.add(f"Count: {item['count']}")
+
+            console.print(tree)
+
+        else:  # json
+            import json
+            output = json.dumps(items, indent=2)
+            console.print(output)
+
+        return items
+
+    def process(self, count=100, delay=0.01):
+        """Process items with progress bar
+
+        Args:
+            count: Number of items to process (default: 100)
+            delay: Delay between items in seconds (default: 0.01)
+        """
+        console.print(Panel(
+            f"[bold cyan]Processing {count} items[/bold cyan]",
+            border_style="cyan"
+        ))
+
+        results = []
+        for i in track(range(count), description="Processing..."):
+            time.sleep(delay)
+            results.append(i)
+
+        console.print("[green]✓[/green] Processing complete!")
+        console.print(f"[dim]Processed {len(results)} items[/dim]")
+
+        return {"processed": len(results)}
+
+    def build(self, target='production', verbose=False):
+        """Build project with formatted output
+
+        Args:
+            target: Build target environment (default: production)
+            verbose: Show detailed build information (default: False)
+        """
+        console.print(Panel(
+            f"[bold]Building for {target}[/bold]",
+            title="Build Process",
+            border_style="blue"
+        ))
+
+        steps = [
+            "Cleaning build directory",
+            "Installing dependencies",
+            "Compiling source files",
+            "Running tests",
+            "Packaging artifacts"
+        ]
+
+        for step in steps:
+            console.print(f"[cyan]→[/cyan] {step}...")
+            if verbose:
+                console.print(f"  [dim]Details for: {step}[/dim]")
+            time.sleep(0.3)
+
+        console.print("\n[green]✓[/green] Build successful!")
+
+        return {
+            "status": "success",
+            "target": target,
+            "steps_completed": len(steps)
+        }
+
+
+def main():
+    fire.Fire({{CLASS_NAME}})
+
+
+if __name__ == '__main__':
+    main()
+
+
+# Usage examples:
+# python {{CLI_NAME_LOWER}}.py status
+# python {{CLI_NAME_LOWER}}.py list-items
+# python {{CLI_NAME_LOWER}}.py list-items --format=tree
+# python {{CLI_NAME_LOWER}}.py process --count=50
+# python {{CLI_NAME_LOWER}}.py build --target=staging --verbose

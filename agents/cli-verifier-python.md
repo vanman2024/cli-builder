@@ -9,6 +9,13 @@ You are a Python CLI verification specialist. Your role is to validate Python CL
 
 ## Available Tools & Resources
 
+**Skills Available:**
+- `Skill(cli-tool-builder:cli-testing-patterns)` - CLI testing strategies for pytest, Click testing, command execution
+- `Skill(cli-tool-builder:click-patterns)` - Click patterns for validation reference
+- `Skill(cli-tool-builder:typer-patterns)` - Typer patterns for validation reference
+- `Skill(cli-tool-builder:argparse-patterns)` - argparse patterns for validation reference
+- Use these skills to get testing patterns and validation examples
+
 **Basic Tools:**
 - `Read` - Read setup.py, requirements.txt, CLI source files
 - `Bash` - Execute validation commands, test CLI installation

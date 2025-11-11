@@ -1,0 +1,117 @@
+import { GluegunCommand } from 'gluegun'
+
+/**
+ * Examples of filesystem operations with Gluegun
+ */
+const command: GluegunCommand = {
+  name: 'filesystem',
+  description: 'Filesystem operation examples',
+
+  run: async (toolbox) => {
+    const { filesystem, print } = toolbox
+
+    print.info('=== Filesystem Examples ===\n')
+
+    // 1. Read file
+    print.info('1. Read file')
+    const packageJson = await filesystem.read('package.json', 'json')
+    if (packageJson) {
+      print.success(`Project: ${packageJson.name}`)
+    }
+
+    // 2. Write file
+    print.info('\n2. Write file')
+    await filesystem.write('temp-output.txt', 'Hello from Gluegun!', {
+      atomic: true // Ensures file is written completely or not at all
+    })
+    print.success('File written: temp-output.txt')
+
+    // 3. Check if file exists
+    print.info('\n3. Check existence')
+    const exists = filesystem.exists('temp-output.txt')
+    print.info(`temp-output.txt exists: ${exists}`)
+
+    // 4. Create directory
+    print.info('\n4. Create directory')
+    await filesystem.dir('temp-dir/nested/deep')
+    print.success('Created nested directories')
+
+    // 5. List files
+    print.info('\n5. List files')
+    const files = filesystem.list('.')
+    print.info(`Files in current directory: ${files?.length || 0}`)
+
+    // 6. Find files with pattern
+    print.info('\n6. Find files')
+    const tsFiles = filesystem.find('.', { matching: '*.ts', recursive: false })
+    print.info(`TypeScript files found: ${tsFiles?.length || 0}`)
+    tsFiles?.slice(0, 5).forEach(file => print.info(`  - ${file}`))
+
+    // 7. Copy file/directory
+    print.info('\n7. Copy operations')
+    await filesystem.copy('temp-output.txt', 'temp-dir/copy.txt')
+    print.success('File copied to temp-dir/copy.txt')
+
+    // 8. Move/rename
+    print.info('\n8. Move/rename')
+    await filesystem.move('temp-output.txt', 'temp-dir/moved.txt')
+    print.success('File moved to temp-dir/moved.txt')
+
+    // 9. Read directory tree
+    print.info('\n9. Directory tree')
+    const tree = filesystem.inspectTree('temp-dir')
+    print.info(`Temp directory structure:`)
+    print.info(JSON.stringify(tree, null, 2))
+
+    // 10. File info
+    print.info('\n10. File info')
+    const info = filesystem.inspect('temp-dir/moved.txt')
+    if (info) {
+      print.info(`File type: ${info.type}`)
+      print.info(`File size: ${info.size} bytes`)
+    }
+
+    // 11. Append to file
+    print.info('\n11. Append to file')
+    await filesystem.append('temp-dir/moved.txt', '\nAppended line')
+    print.success('Content appended')
+
+    // 12. Read file with encoding
+    print.info('\n12. Read with encoding')
+    const content = await filesystem.read('temp-dir/moved.txt', 'utf8')
+    print.info(`Content: ${content}`)
+
+    // 13. Path utilities
+    print.info('\n13. Path utilities')
+    const fullPath = filesystem.path('temp-dir', 'moved.txt')
+    print.info(`Full path: ${fullPath}`)
+    print.info(`Current directory: ${filesystem.cwd()}`)
+    print.info(`Path separator: ${filesystem.separator}`)
+
+    // 14. Find by extension
+    print.info('\n14. Find by extension')
+    const jsonFiles = filesystem.find('.', {
+      matching: '*.json',
+      recursive: false
+    })
+    print.info(`JSON files: ${jsonFiles?.join(', ')}`)
+
+    // 15. Remove files (cleanup)
+    print.info('\n15. Cleanup')
+    await filesystem.remove('temp-dir')
+    print.success('Removed temp directory')
+
+    // Summary
+    print.info('\n=== Summary ===')
+    print.success('Filesystem operations completed!')
+    print.info('Common operations:')
+    print.info('  - read/write: Handle file content')
+    print.info('  - exists: Check file/directory existence')
+    print.info('  - dir: Create directories')
+    print.info('  - find: Search for files')
+    print.info('  - copy/move: Manipulate files')
+    print.info('  - remove: Delete files/directories')
+  }
+}
+
+module.exports = command

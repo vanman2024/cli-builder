@@ -1,0 +1,71 @@
+package cmd
+
+import (
+    "fmt"
+    "os"
+
+    "github.com/spf13/cobra"
+)
+
+// completionCmd represents the completion command
+var completionCmd = &cobra.Command{
+    Use:   "completion [bash|zsh|fish|powershell]",
+    Short: "Generate completion script",
+    Long: `Generate shell completion script for {{.CLIName}}.
+
+The completion script must be evaluated to provide interactive
+completion. This can be done by sourcing it from your shell profile.
+
+Bash:
+    source <({{.CLIName}} completion bash)
+
+    # To load completions for each session, execute once:
+    # Linux:
+    {{.CLIName}} completion bash > /etc/bash_completion.d/{{.CLIName}}
+    # macOS:
+    {{.CLIName}} completion bash > /usr/local/etc/bash_completion.d/{{.CLIName}}
+
+Zsh:
+    # If shell completion is not already enabled, enable it:
+    echo "autoload -U compinit; compinit" >> ~/.zshrc
+
+    # To load completions for each session, execute once:
+    {{.CLIName}} completion zsh > "${fpath[1]}/_{{.CLIName}}"
+
+    # You will need to start a new shell for this setup to take effect.
+
+Fish:
+    {{.CLIName}} completion fish | source
+
+    # To load completions for each session, execute once:
+    {{.CLIName}} completion fish > ~/.config/fish/completions/{{.CLIName}}.fish
+
+PowerShell:
+    {{.CLIName}} completion powershell | Out-String | Invoke-Expression
+
+    # To load completions for every new session:
+    {{.CLIName}} completion powershell > {{.CLIName}}.ps1
+    # and source this file from your PowerShell profile.
+`,
+    DisableFlagsInUseLine: true,
+    ValidArgs:             []string{"bash", "zsh", "fish", "powershell"},
+    Args:                  cobra.ExactArgs(1),
+    RunE: func(cmd *cobra.Command, args []string) error {
+        switch args[0] {
+        case "bash":
+            return cmd.Root().GenBashCompletion(os.Stdout)
+        case "zsh":
+            return cmd.Root().GenZshCompletion(os.Stdout)
+        case "fish":
+            return cmd.Root().GenFishCompletion(os.Stdout, true)
+        case "powershell":
+            return cmd.Root().GenPowerShellCompletionWithDesc(os.Stdout)
+        default:
+            return fmt.Errorf("unsupported shell type: %s", args[0])
+        }
+    },
+}
+
+func init() {
+    rootCmd.AddCommand(completionCmd)
+}

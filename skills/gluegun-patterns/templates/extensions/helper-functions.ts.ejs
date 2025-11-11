@@ -1,0 +1,132 @@
+import { GluegunToolbox } from 'gluegun'
+
+/**
+ * Helper functions extension for <%= cliName %>
+ */
+module.exports = (toolbox: GluegunToolbox) => {
+  const { filesystem, strings, print } = toolbox
+
+  toolbox.helpers = {
+    /**
+     * Read configuration file with validation
+     */
+    readConfig: async (configPath: string = './<%= configFile %>'): Promise<any> => {
+      if (!filesystem.exists(configPath)) {
+        print.error(`Configuration file not found: ${configPath}`)
+        return null
+      }
+
+      try {
+        const config = await filesystem.read(configPath, 'json')
+
+        // Validate configuration
+        if (!config.<%= requiredField %>) {
+          print.warning('Configuration missing required field: <%= requiredField %>')
+        }
+
+        return config
+      } catch (error) {
+        print.error(`Failed to read config: ${error.message}`)
+        return null
+      }
+    },
+
+    /**
+     * Write configuration file safely
+     */
+    writeConfig: async (config: any, configPath: string = './<%= configFile %>'): Promise<boolean> => {
+      try {
+        await filesystem.write(configPath, config, { jsonIndent: 2 })
+        print.success(`Configuration saved to ${configPath}`)
+        return true
+      } catch (error) {
+        print.error(`Failed to write config: ${error.message}`)
+        return false
+      }
+    },
+
+    /**
+     * Ensure directory exists and is writable
+     */
+    ensureDir: async (dirPath: string): Promise<boolean> => {
+      try {
+        await filesystem.dir(dirPath)
+        print.debug(`Directory ensured: ${dirPath}`)
+        return true
+      } catch (error) {
+        print.error(`Failed to create directory: ${error.message}`)
+        return false
+      }
+    },
+
+    /**
+     * Find files matching pattern
+     */
+    findFiles: (pattern: string, directory: string = '.'): string[] => {
+      const files = filesystem.find(directory, { matching: pattern })
+      print.debug(`Found ${files.length} files matching: ${pattern}`)
+      return files
+    },
+
+    /**
+     * Convert string to various cases
+     */
+    convertCase: (input: string) => {
+      return {
+        pascal: strings.pascalCase(input),
+        camel: strings.camelCase(input),
+        kebab: strings.kebabCase(input),
+        snake: strings.snakeCase(input),
+        upper: strings.upperCase(input),
+        lower: strings.lowerCase(input)
+      }
+    },
+
+    /**
+     * Display success message with optional details
+     */
+    success: (message: string, details?: string[]) => {
+      print.success(message)
+      if (details && details.length > 0) {
+        details.forEach(detail => print.info(`  ${detail}`))
+      }
+    },
+
+    /**
+     * Display error message and exit
+     */
+    fatal: (message: string, error?: Error) => {
+      print.error(message)
+      if (error) {
+        print.error(error.message)
+        if (error.stack) {
+          print.debug(error.stack)
+        }
+      }
+      process.exit(1)
+    },
+
+    /**
+     * Check if command is available in PATH
+     */
+    hasCommand: async (command: string): Promise<boolean> => {
+      const result = await toolbox.system.which(command)
+      return result !== null
+    },
+
+    /**
+     * Run command with error handling
+     */
+    runCommand: async (command: string, options = {}): Promise<string | null> => {
+      try {
+        print.debug(`Running: ${command}`)
+        const output = await toolbox.system.run(command, options)
+        return output
+      } catch (error) {
+        print.error(`Command failed: ${command}`)
+        print.error(error.message)
+        return null
+      }
+    }
+  }
+}

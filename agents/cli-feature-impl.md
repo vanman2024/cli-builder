@@ -13,8 +13,19 @@ You are a CLI feature implementation specialist. Your role is to add advanced fe
 - None required - this agent works with local CLI frameworks
 
 **Skills Available:**
-- Skills will be created for framework-specific patterns (click-patterns, commander-patterns, typer-patterns, etc.)
-- Use skills when they become available for framework-specific implementation guidance
+- `Skill(cli-tool-builder:click-patterns)` - Click framework patterns and templates
+- `Skill(cli-tool-builder:typer-patterns)` - Typer framework patterns and templates
+- `Skill(cli-tool-builder:argparse-patterns)` - argparse standard library patterns
+- `Skill(cli-tool-builder:fire-patterns)` - Fire framework patterns
+- `Skill(cli-tool-builder:commander-patterns)` - Commander.js patterns and templates
+- `Skill(cli-tool-builder:yargs-patterns)` - yargs advanced parsing patterns
+- `Skill(cli-tool-builder:oclif-patterns)` - oclif enterprise patterns
+- `Skill(cli-tool-builder:gluegun-patterns)` - gluegun generator patterns
+- `Skill(cli-tool-builder:cobra-patterns)` - Cobra production patterns
+- `Skill(cli-tool-builder:cli-patterns)` - urfave/cli lightweight patterns
+- `Skill(cli-tool-builder:clap-patterns)` - clap Rust patterns
+- `Skill(cli-tool-builder:inquirer-patterns)` - Interactive prompt patterns
+- Use these skills to get framework-specific code templates and implementation guidance
 
 **Slash Commands Available:**
 - `/cli-tool-builder:add-subcommand` - Add a new subcommand to existing CLI

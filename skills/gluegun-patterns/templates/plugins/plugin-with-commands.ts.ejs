@@ -1,0 +1,93 @@
+import { GluegunToolbox } from 'gluegun'
+
+/**
+ * <%= pluginName %> Plugin with Commands
+ * Demonstrates how to add commands via plugins
+ */
+module.exports = (toolbox: GluegunToolbox) => {
+  const { print, runtime } = toolbox
+
+  print.debug('<%= pluginName %> plugin loaded')
+
+  // Register plugin commands
+  runtime.addPlugin({
+    name: '<%= pluginName %>',
+    commands: [
+      {
+        name: '<%= command1Name %>',
+        description: '<%= command1Description %>',
+        run: async (toolbox) => {
+          const { print, parameters } = toolbox
+
+          print.info('Running <%= command1Name %> from <%= pluginName %>')
+
+          // Command logic
+          const arg = parameters.first
+          if (arg) {
+            print.success(`Processed: ${arg}`)
+          } else {
+            print.warning('No argument provided')
+          }
+        }
+      },
+      {
+        name: '<%= command2Name %>',
+        description: '<%= command2Description %>',
+        run: async (toolbox) => {
+          const { print, filesystem, template } = toolbox
+
+          print.info('Running <%= command2Name %> from <%= pluginName %>')
+
+          // Generate from template
+          await template.generate({
+            template: '<%= template2 %>',
+            target: '<%= output2 %>',
+            props: {
+              pluginName: '<%= pluginName %>',
+              timestamp: new Date().toISOString()
+            }
+          })
+
+          print.success('Generated successfully')
+        }
+      }
+    ]
+  })
+
+  // Add plugin utilities to toolbox
+  toolbox.<%= pluginNamespace %> = {
+    /**
+     * Shared utility function
+     */
+    sharedUtility: (input: string): string => {
+      print.debug(`<%= pluginName %> processing: ${input}`)
+      return input.toUpperCase()
+    },
+
+    /**
+     * Validate plugin requirements
+     */
+    validateRequirements: async (): Promise<boolean> => {
+      const { filesystem, system } = toolbox
+
+      // Check for required files
+      <% requiredFiles.forEach(file => { %>
+      if (!filesystem.exists('<%= file %>')) {
+        print.error('Missing required file: <%= file %>')
+        return false
+      }
+      <% }) %>
+
+      // Check for required commands
+      <% requiredCommands.forEach(cmd => { %>
+      const has<%= cmd %> = await system.which('<%= cmd %>')
+      if (!has<%= cmd %>) {
+        print.error('Missing required command: <%= cmd %>')
+        return false
+      }
+      <% }) %>
+
+      return true
+    }
+  }
+}

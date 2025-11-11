@@ -1,0 +1,33 @@
+import { GluegunCommand } from 'gluegun'
+
+const command: GluegunCommand = {
+  name: '<%= name %>',
+  description: '<%= description %>',
+
+  run: async (toolbox) => {
+    const { print, parameters } = toolbox
+
+    // Get parameters
+    const options = parameters.options
+    const args = parameters.array
+
+    // Command logic
+    print.info(`Running <%= name %> command`)
+
+    // Process arguments
+    if (args.length === 0) {
+      print.warning('No arguments provided')
+      return
+    }
+
+    // Example: Process each argument
+    for (const arg of args) {
+      print.info(`Processing: ${arg}`)
+    }
+
+    // Success message
+    print.success('<%= name %> completed successfully')
+  }
+}
+
+module.exports = command

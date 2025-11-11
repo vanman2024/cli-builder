@@ -1,0 +1,20 @@
+package {{.PackageName}}
+
+import (
+    "github.com/spf13/cobra"
+)
+
+// {{.CommandName}}Cmd represents the {{.CommandName}} parent command
+var {{.CommandName}}Cmd = &cobra.Command{
+    Use:     "{{.CommandName}}",
+    Short:   "{{.ShortDescription}}",
+    Long:    `{{.LongDescription}}`,
+    GroupID: "{{.GroupID}}",
+}
+
+func init() {
+    // Add subcommands here
+    // {{.CommandName}}Cmd.AddCommand({{.CommandName}}ListCmd)
+    // {{.CommandName}}Cmd.AddCommand({{.CommandName}}CreateCmd)
+    // {{.CommandName}}Cmd.AddCommand({{.CommandName}}DeleteCmd)
+}

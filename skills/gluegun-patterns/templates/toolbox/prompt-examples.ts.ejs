@@ -1,0 +1,126 @@
+import { GluegunCommand } from 'gluegun'
+
+/**
+ * Examples of different prompt patterns with Gluegun
+ */
+const command: GluegunCommand = {
+  name: 'prompts',
+  description: 'Interactive prompt examples',
+
+  run: async (toolbox) => {
+    const { prompt, print } = toolbox
+
+    print.info('=== Prompt Examples ===\n')
+
+    // 1. Simple text input
+    const nameResult = await prompt.ask({
+      type: 'input',
+      name: 'name',
+      message: 'What is your name?',
+      initial: 'John Doe'
+    })
+    print.info(`Hello, ${nameResult.name}!\n`)
+
+    // 2. Confirmation prompt
+    const shouldContinue = await prompt.confirm('Do you want to continue?')
+    if (!shouldContinue) {
+      print.warning('Operation cancelled')
+      return
+    }
+
+    // 3. Select from list
+    const frameworkResult = await prompt.ask({
+      type: 'select',
+      name: 'framework',
+      message: 'Choose your framework:',
+      choices: ['React', 'Vue', 'Angular', 'Svelte']
+    })
+    print.info(`Selected: ${frameworkResult.framework}\n`)
+
+    // 4. Multi-select
+    const featuresResult = await prompt.ask({
+      type: 'multiselect',
+      name: 'features',
+      message: 'Select features to enable:',
+      choices: [
+        { name: 'TypeScript', value: 'typescript' },
+        { name: 'ESLint', value: 'eslint' },
+        { name: 'Prettier', value: 'prettier' },
+        { name: 'Testing', value: 'testing' }
+      ],
+      initial: ['typescript', 'eslint']
+    })
+    print.info(`Features: ${featuresResult.features.join(', ')}\n`)
+
+    // 5. Password input
+    const passwordResult = await prompt.ask({
+      type: 'password',
+      name: 'password',
+      message: 'Enter password:'
+    })
+    print.info('Password received (hidden)\n')
+
+    // 6. Number input
+    const portResult = await prompt.ask({
+      type: 'numeral',
+      name: 'port',
+      message: 'Enter port number:',
+      initial: 3000
+    })
+    print.info(`Port: ${portResult.port}\n`)
+
+    // 7. Autocomplete
+    const colorResult = await prompt.ask({
+      type: 'autocomplete',
+      name: 'color',
+      message: 'Choose a color:',
+      choices: ['Red', 'Blue', 'Green', 'Yellow', 'Purple', 'Orange']
+    })
+    print.info(`Color: ${colorResult.color}\n`)
+
+    // 8. List input (comma-separated)
+    const tagsResult = await prompt.ask({
+      type: 'list',
+      name: 'tags',
+      message: 'Enter tags (comma-separated):'
+    })
+    print.info(`Tags: ${tagsResult.tags.join(', ')}\n`)
+
+    // 9. Snippet (multiple fields)
+    const userResult = await prompt.ask({
+      type: 'snippet',
+      name: 'user',
+      message: 'Fill out user information:',
+      template: `Name: \${name}
+Email: \${email}
+Age: \${age}`
+    })
+    print.info('User info:')
+    print.info(JSON.stringify(userResult.user.values, null, 2))
+    print.info('')
+
+    // 10. Conditional prompts
+    const projectTypeResult = await prompt.ask({
+      type: 'select',
+      name: 'projectType',
+      message: 'Project type:',
+      choices: ['web', 'mobile', 'desktop']
+    })
+
+    if (projectTypeResult.projectType === 'web') {
+      const webFrameworkResult = await prompt.ask({
+        type: 'select',
+        name: 'webFramework',
+        message: 'Choose web framework:',
+        choices: ['Next.js', 'Remix', 'SvelteKit']
+      })
+      print.info(`Web framework: ${webFrameworkResult.webFramework}\n`)
+    }
+
+    // Summary
+    print.success('All prompts completed!')
+    print.info('See the examples above for different prompt patterns')
+  }
+}
+
+module.exports = command

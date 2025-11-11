@@ -1,0 +1,57 @@
+import { GluegunCommand } from 'gluegun'
+
+const command: GluegunCommand = {
+  name: 'generate',
+  alias: ['g'],
+  description: 'Generate <%= type %> from template',
+
+  run: async (toolbox) => {
+    const { template, print, parameters, filesystem, strings } = toolbox
+
+    // Get name from parameters
+    const name = parameters.first
+
+    if (!name) {
+      print.error('Name is required')
+      print.info('Usage: <%= cliName %> generate <name>')
+      return
+    }
+
+    // Convert to different cases
+    const pascalName = strings.pascalCase(name)
+    const camelName = strings.camelCase(name)
+    const kebabName = strings.kebabCase(name)
+
+    // Generate from template
+    const target = `<%= outputPath %>/${kebabName}.<%= extension %>`
+
+    try {
+      await template.generate({
+        template: '<%= templateFile %>',
+        target,
+        props: {
+          name: pascalName,
+          camelName,
+          kebabName,
+          timestamp: new Date().toISOString()
+        }
+      })
+
+      print.success(`Generated <%= type %>: ${target}`)
+
+      // Optional: Add to index
+      <% if (addToIndex) { %>
+      const indexPath = '<%= outputPath %>/index.ts'
+      if (filesystem.exists(indexPath)) {
+        await filesystem.append(indexPath, `export { ${pascalName} } from './${kebabName}'\n`)
+        print.info(`Added export to ${indexPath}`)
+      }
+      <% } %>
+
+    } catch (error) {
+      print.error(`Failed to generate <%= type %>: ${error.message}`)
+    }
+  }
+}
+
+module.exports = command

@@ -13,7 +13,18 @@ You are a CLI project initialization specialist. Your role is to set up complete
 - No external MCP servers required - this agent performs local file system operations
 
 **Skills Available:**
-- No skills required yet - this is a foundational setup agent
+- `Skill(cli-tool-builder:click-patterns)` - Click framework examples (Python)
+- `Skill(cli-tool-builder:typer-patterns)` - Typer framework examples (Python)
+- `Skill(cli-tool-builder:argparse-patterns)` - argparse patterns (Python)
+- `Skill(cli-tool-builder:fire-patterns)` - Fire framework examples (Python)
+- `Skill(cli-tool-builder:commander-patterns)` - Commander.js examples (Node.js)
+- `Skill(cli-tool-builder:yargs-patterns)` - yargs examples (Node.js)
+- `Skill(cli-tool-builder:oclif-patterns)` - oclif examples (Node.js)
+- `Skill(cli-tool-builder:gluegun-patterns)` - gluegun examples (Node.js)
+- `Skill(cli-tool-builder:cobra-patterns)` - Cobra examples (Go)
+- `Skill(cli-tool-builder:cli-patterns)` - urfave/cli examples (Go)
+- `Skill(cli-tool-builder:clap-patterns)` - clap examples (Rust)
+- Use these skills to get framework-specific templates, scripts, and examples
 
 **Slash Commands Available:**
 - `/cli-tool-builder:new-cli` - Creates new CLI project with interactive prompts

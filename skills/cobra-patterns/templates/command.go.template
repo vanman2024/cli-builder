@@ -1,0 +1,71 @@
+package {{.PackageName}}
+
+import (
+    "fmt"
+
+    "github.com/spf13/cobra"
+)
+
+var (
+    // Command-specific flags
+    {{.CommandName}}Name    string
+    {{.CommandName}}Force   bool
+    {{.CommandName}}DryRun  bool
+)
+
+// {{.CommandName}}Cmd represents the {{.CommandName}} command
+var {{.CommandName}}Cmd = &cobra.Command{
+    Use:   "{{.CommandName}} [flags]",
+    Short: "{{.ShortDescription}}",
+    Long: `{{.LongDescription}}
+
+This command provides {{.CommandName}} functionality with proper
+error handling and validation.
+
+Examples:
+  {{.CLIName}} {{.CommandName}} --name example
+  {{.CLIName}} {{.CommandName}} --force
+  {{.CLIName}} {{.CommandName}} --dry-run`,
+    Args:    cobra.NoArgs,
+    GroupID: "{{.GroupID}}",
+    RunE: func(cmd *cobra.Command, args []string) error {
+        // Validate required flags
+        if {{.CommandName}}Name == "" {
+            return fmt.Errorf("--name is required")
+        }
+
+        // Check dry-run mode
+        if {{.CommandName}}DryRun {
+            fmt.Printf("DRY RUN: Would execute {{.CommandName}} with name: %s\n", {{.CommandName}}Name)
+            return nil
+        }
+
+        // Execute command logic
+        if cmd.Root().PersistentFlags().Lookup("verbose").Changed {
+            fmt.Printf("Executing {{.CommandName}} in verbose mode...\n")
+        }
+
+        if err := execute{{.CommandName}}({{.CommandName}}Name, {{.CommandName}}Force); err != nil {
+            return fmt.Errorf("{{.CommandName}} failed: %w", err)
+        }
+
+        fmt.Printf("Successfully executed {{.CommandName}}: %s\n", {{.CommandName}}Name)
+        return nil
+    },
+}
+
+func init() {
+    // Define flags
+    {{.CommandName}}Cmd.Flags().StringVarP(&{{.CommandName}}Name, "name", "n", "", "resource name (required)")
+    {{.CommandName}}Cmd.Flags().BoolVarP(&{{.CommandName}}Force, "force", "f", false, "force operation")
+    {{.CommandName}}Cmd.Flags().BoolVar(&{{.CommandName}}DryRun, "dry-run", false, "simulate operation without making changes")
+
+    // Mark required flags
+    {{.CommandName}}Cmd.MarkFlagRequired("name")
+}
+
+// execute{{.CommandName}} performs the actual operation
+func execute{{.CommandName}}(name string, force bool) error {
+    // Implementation goes here
+    return nil
+}
