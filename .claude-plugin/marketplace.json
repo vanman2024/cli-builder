@@ -1,0 +1,33 @@
+{
+    "name": "cli-builder",
+    "version": "1.0.0",
+    "description": "CLI Building Marketplace - Tools and patterns for building command-line applications",
+    "owner": {
+        "name": "CLI Development Team",
+        "email": "noreply@cli-builder.dev"
+    },
+    "plugins": [
+        {
+            "name": "cli-builder",
+            "description": "CLI application builder plugin with comprehensive patterns for argument parsing, configuration, interactive prompts, and output formatting",
+            "version": "1.0.0",
+            "author": {
+                "name": "vanman2024",
+                "email": "noreply@cli-builder.dev"
+            },
+            "source": "./plugins/cli-builder",
+            "category": "development",
+            "keywords": [
+                "cli",
+                "command-line",
+                "argparse",
+                "click",
+                "typer",
+                "commander",
+                "oclif",
+                "clap",
+                "cobra"
+            ]
+        }
+    ]
+}
