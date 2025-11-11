@@ -1,0 +1,10 @@
+{
+  "name": "cli-tool-builder",
+  "version": "1.0.0",
+  "description": "A comprehensive plugin for building professional CLI tools with best practices",
+  "author": {
+    "name": "Claude Code Plugin Builder"
+  },
+  "license": "MIT",
+  "keywords": ["cli", "tool-builder", "command-line", "developer-tools"]
+}
