@@ -1,128 +1,140 @@
 ---
 description: Initialize new CLI tool project with framework selection
 argument-hint: <tool-name>
-allowed-tools: AskUserQuestion, Bash(*), Read, Write, Edit
+allowed-tools: Task, AskUserQuestion, Bash, Read
 ---
 
 **Arguments**: $ARGUMENTS
 
-Goal: Initialize a new CLI tool project with user-selected language and framework, complete with proper structure, dependencies, and configuration.
+Goal: Orchestrate CLI project initialization by gathering requirements and delegating to the cli-setup agent for implementation.
 
-Core Principles:
-- Ask user for preferences before generating
-- Detect package managers available in environment
-- Follow framework conventions for each language
-- Generate working entry point with proper shebang
-- Initialize git repository and create essential files
+**Architectural Context:**
 
-Phase 1: Gather Requirements
-Goal: Collect user preferences for language and framework
+This command follows the composition pattern:
+- **Commands are orchestrators** - They ask questions and delegate
+- **Agents are workers** - They do the complex implementation
+- Commands invoke agents via Task tool, not implement directly
+
+Phase 1: Load Architectural Framework
+Goal: Understand component composition patterns
+
+Actions:
+- Load the complete component decision framework:
+  !{Read ~/.claude/plugins/marketplaces/domain-plugin-builder/plugins/domain-plugin-builder/docs/frameworks/claude/reference/component-decision-framework.md}
+- This provides critical understanding of:
+  - Commands are the primitive (orchestrators)
+  - Agents are for complex multi-step workflows
+  - Proper composition: Command → Agent → Skills
+  - When to delegate vs when to execute directly
+
+Phase 2: Gather Requirements
+Goal: Collect user preferences for the CLI project
 
 Actions:
 - Parse $ARGUMENTS for tool name
-- If no tool name provided, ask user for it
-- Ask user for language preference using AskUserQuestion:
+- If no tool name provided, ask user for it via AskUserQuestion
+- Ask user for language preference:
   - Options: TypeScript, Python, Go, Rust
+  - Include descriptions of each language's strengths
 - Based on language selection, ask for framework:
-  - Python: Click, Typer, argparse, Fire
-  - TypeScript: Commander.js, yargs, oclif, gluegun
-  - Go: Cobra, cli
-  - Rust: clap
-- Ask for package manager preference if applicable
+  - **Python**: Click (decorator-based), Typer (type-safe), argparse (stdlib), Fire (auto-generate)
+  - **TypeScript/Node.js**: Commander.js (simple), yargs (advanced), oclif (enterprise), gluegun (generators)
+  - **Go**: Cobra (production), cli (lightweight)
+  - **Rust**: clap (full-featured)
+- Ask for package manager preference:
+  - Python: pip, poetry, pipenv
+  - Node.js: npm, yarn, pnpm
+  - Go: go modules (automatic)
+  - Rust: cargo (automatic)
 
-Phase 2: Environment Validation
+Phase 3: Environment Validation
 Goal: Verify required tools are available
 
 Actions:
-- Check if selected language runtime is installed
-- Example: !{bash python3 --version 2>/dev/null || echo "Not found"}
-- Example: !{bash node --version 2>/dev/null || echo "Not found"}
-- Example: !{bash go version 2>/dev/null || echo "Not found"}
-- Example: !{bash rustc --version 2>/dev/null || echo "Not found"}
+- Check if selected language runtime is installed:
+  - Python: !{bash python3 --version 2>/dev/null || echo "Not found"}
+  - Node.js: !{bash node --version 2>/dev/null || echo "Not found"}
+  - Go: !{bash go version 2>/dev/null || echo "Not found"}
+  - Rust: !{bash rustc --version 2>/dev/null || echo "Not found"}
 - Check if selected package manager is available
-- Report any missing dependencies to user
+- If any tools missing, inform user and provide installation instructions
+- If critical tools missing, stop and ask user to install them first
 
-Phase 3: Project Structure Creation
-Goal: Create directory structure for CLI tool
-
-Actions:
-- Create project directory: !{bash mkdir -p "$ARGUMENTS"}
-- For Python projects: !{bash mkdir -p "$ARGUMENTS/src/$ARGUMENTS" "$ARGUMENTS/tests"}
-- For TypeScript projects: !{bash mkdir -p "$ARGUMENTS/src" "$ARGUMENTS/dist" "$ARGUMENTS/tests"}
-- For Go projects: !{bash mkdir -p "$ARGUMENTS/cmd/$ARGUMENTS" "$ARGUMENTS/pkg"}
-- For Rust projects: !{bash mkdir -p "$ARGUMENTS/src"}
-- Create basic directory structure following language conventions
-
-Phase 4: Generate Entry Point
-Goal: Create main CLI entry point with framework setup
+Phase 4: Delegate to CLI Setup Agent
+Goal: Hand off implementation to specialized agent
 
 Actions:
-- Generate appropriate entry point file based on language and framework:
-  - Python: src/$ARGUMENTS/__main__.py or src/$ARGUMENTS/cli.py
-  - TypeScript: src/index.ts or src/cli.ts
-  - Go: cmd/$ARGUMENTS/main.go
-  - Rust: src/main.rs
-- Include proper shebang for interpreted languages
-- Set up framework imports and basic command structure
-- Create example command with help text
-- Make entry point executable if needed
 
-Phase 5: Package Configuration
-Goal: Set up package manager configuration files
+**Invoke the cli-setup agent to perform the actual implementation:**
 
-Actions:
-- For Python: Create setup.py or pyproject.toml with entry_points
-- For TypeScript: Create package.json with bin field
-- For Go: Create go.mod with module path
-- For Rust: Create Cargo.toml with [[bin]] section
-- Include project metadata: name, version, description, author
-- Add framework dependency
-- Configure development dependencies (testing, linting)
+Task(
+  description="Initialize CLI project with chosen framework",
+  subagent_type="cli-tool-builder:cli-setup",
+  prompt="You are the cli-setup agent. Initialize a new CLI tool project with the specifications provided.
 
-Phase 6: Install Dependencies
-Goal: Install required framework and dependencies
+**Project Details:**
+- Tool Name: {tool_name from Phase 2}
+- Language: {language from Phase 2}
+- Framework: {framework from Phase 2}
+- Package Manager: {package_manager from Phase 2}
 
-Actions:
-- For Python: !{bash cd "$ARGUMENTS" && pip install -e .}
-- For TypeScript: !{bash cd "$ARGUMENTS" && npm install}
-- For Go: !{bash cd "$ARGUMENTS" && go mod tidy}
-- For Rust: !{bash cd "$ARGUMENTS" && cargo build}
-- Verify installation completed successfully
-- Report any installation errors
+**User Requirements:**
+Create a complete CLI tool project with:
+1. Proper directory structure for the chosen framework
+2. Entry point file with correct shebang
+3. Package configuration (package.json, setup.py, Cargo.toml, or go.mod)
+4. Executable bin/entry point configuration
+5. Dependencies installation for chosen framework
+6. Basic command structure following framework conventions
+7. README with usage instructions
+8. LICENSE file (MIT)
+9. .gitignore for the language
+10. Git repository initialization
 
-Phase 7: Additional Files
-Goal: Create README, LICENSE, and configuration files
+**Skills Available:**
+- Use Skill(cli-tool-builder:{framework}-patterns) for framework-specific patterns
+- Example: Skill(cli-tool-builder:click-patterns) for Python Click
+- Example: Skill(cli-tool-builder:commander-patterns) for Commander.js
 
-Actions:
-- Generate README.md with:
-  - Project name and description
-  - Installation instructions
-  - Basic usage examples
-  - Development setup
-- Create LICENSE file (MIT by default)
-- Add .gitignore for language-specific files
-- Create basic test file demonstrating framework usage
-- Add configuration files (.editorconfig, etc.)
+**Implementation:**
+Follow the phased approach in your agent definition:
+1. Discovery: Confirm requirements
+2. Analysis: Determine exact dependencies and structure
+3. Planning: Design directory layout and files
+4. Implementation: Create all files and install dependencies
+5. Verification: Test that CLI works and passes validation
 
-Phase 8: Git Initialization
-Goal: Initialize git repository with initial commit
+Deliverable: Complete working CLI project in ./{tool_name}/ directory"
+)
+
+Wait for agent to complete. Agent will use framework-specific skills and create the complete project.
+
+Phase 5: Verification
+Goal: Confirm project was created successfully
 
 Actions:
-- Initialize git: !{bash cd "$ARGUMENTS" && git init}
-- Stage all files: !{bash cd "$ARGUMENTS" && git add .}
-- Create initial commit: !{bash cd "$ARGUMENTS" && git commit -m "Initial commit: CLI tool scaffold"}
-- Report git repository location
+- Check that project directory exists: !{bash ls -la {tool_name}/}
+- Verify key files were created:
+  - Entry point file
+  - Package configuration
+  - README
+  - LICENSE
+  - .gitignore
+- Display project structure to user
 
-Phase 9: Summary
-Goal: Report what was created and next steps
+Phase 6: Summary
+Goal: Report success and provide next steps
 
 Actions:
-- Display project structure created
-- Show entry point location and how to run tool
-- List installed dependencies
-- Provide next steps:
-  - cd into project directory
-  - Run the tool to verify it works
-  - Start adding custom commands
-  - Configure additional options
-- Show example command to run the tool
+- Display project creation summary:
+  - Tool name
+  - Language and framework
+  - Project location
+  - Entry point file
+- Show next steps:
+  1. cd {tool_name}
+  2. Test CLI: ./{tool_name} --help (or appropriate command)
+  3. Add subcommands: /cli-tool-builder:add-subcommand <command-name>
+  4. Add features: /cli-tool-builder:add-interactive, /cli-tool-builder:add-output-formatting
+  5. Package for distribution: /cli-tool-builder:add-package
+- Encourage user to explore the generated code and customize it
